@@ -27,5 +27,5 @@ NYI
 
 ## TO-DO
 1. ~~ERC-20 implementation~~
-2. Deploy script
+2. ~~Deploy script~~
 3. Tests
