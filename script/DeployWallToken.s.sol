@@ -10,14 +10,14 @@ contract DeployWallToken is Script {
     WallToken wallToken;
     DeployHelper deployHelper;
 
-    function run() external returns (WallToken) {
+    function run() external returns (WallToken, DeployHelper) {
         deployHelper = new DeployHelper();
-        (string memory tokenName, string memory tokenSymbol, uint8 tokenDecimals, uint256 deployKey) = deployHelper.deployConfig();
+        (string memory tokenName, string memory tokenSymbol, uint8 tokenDecimals, uint256 tokenSupply, uint256 deployKey) = deployHelper.deployConfig();
 
         vm.startBroadcast(deployKey);
-        wallToken = new WallToken(tokenName, tokenSymbol, tokenDecimals);
+        wallToken = new WallToken(tokenName, tokenSymbol, tokenDecimals, tokenSupply);
         vm.stopBroadcast();
 
-        return wallToken;
+        return (wallToken, deployHelper);
     }
 }

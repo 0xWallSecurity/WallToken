@@ -13,6 +13,7 @@ contract DeployHelper is Script {
         string tokenName;
         string tokenSymbol;
         uint8 tokenDecimals;
+        uint256 tokenSupply;
         uint256 deployKey;
     }
 
@@ -27,7 +28,8 @@ contract DeployHelper is Script {
         anvilDeployConfig = DeployConfig({
             tokenName: "Wall Token",
             tokenSymbol: "WTK",
-            tokenDecimals: 8,
+            tokenDecimals: 18,
+            tokenSupply: 1000 ether,
             deployKey: ANVIL_PRIVATE_KEY
         });
     }

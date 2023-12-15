@@ -32,10 +32,12 @@ contract WallToken {
 
     /* FUNCTIONS */
 
-    constructor(string memory _name, string memory _symbol, uint8 _decimals) {
+    constructor(string memory _name, string memory _symbol, uint8 _decimals, uint256 _supply) {
         i_name = _name;
         i_symbol = _symbol;
         i_decimals = _decimals;
+        s_totalSupply = _supply * 10 **uint256(i_decimals);
+        s_balances[msg.sender] = s_totalSupply;
     }
 
     /**
