@@ -18,6 +18,7 @@ contract TestWallToken is Script, Test {
     DeployWallToken public deployWallToken;
     address public deployerAddress;
     address public testerAddress;
+    address public approvedAddress;
 
     string tokenName;
     string tokenSymbol;
@@ -32,11 +33,16 @@ contract TestWallToken is Script, Test {
         
         // setup addresses
         testerAddress = makeAddr("tester");
+        approvedAddress = makeAddr("approvedTesterAddress");
         (tokenName, tokenSymbol, tokenDecimals, tokenSupply, deployKey) = deployHelper.deployConfig();
         deployerAddress = vm.addr(deployKey);
         vm.prank(deployerAddress);
         wallToken.transfer(testerAddress, tokenSupply);
     }
+
+    ///////////////////////
+    // Testcases Getters //
+    ///////////////////////
 
     function testTokenName() public {
         assertEq(wallToken.name(), tokenName);
@@ -54,12 +60,105 @@ contract TestWallToken is Script, Test {
         assertEq(wallToken.totalSupply(), tokenSupply*10**tokenDecimals);
     }
 
+    ////////////////////////
+    // Testcases Transfer //
+    ////////////////////////
+
     function testUserCannotTransferExceedingTokens() public {
-        vm.startPrank(testerAddress);
         uint256 balance = wallToken.balanceOf(testerAddress);
 
+        vm.prank(testerAddress);
         vm.expectRevert(WallToken__NotEnoughTokens.selector);
         wallToken.transfer(deployerAddress, balance + 1);
-        vm.stopPrank();
+
     }
+
+    function testUserCannotTransferToZeroAddress() public {
+        uint256 balance = wallToken.balanceOf(testerAddress);
+
+        vm.prank(testerAddress);
+        vm.expectRevert(WallToken__CannotSendToZeroAddress.selector);
+        wallToken.transfer(address(0), balance);
+    }
+
+    function testTransferDoesCorrectlyReduceTokenAmountOnSender() public {
+        uint256 balance = wallToken.balanceOf(testerAddress);
+        uint256 transferAmount = 1 ether;
+
+        vm.prank(testerAddress);
+        wallToken.transfer(deployerAddress, transferAmount);
+        assertEq(wallToken.balanceOf(testerAddress), balance - transferAmount);
+    }
+    
+    function testTransferDoesCorrectlyIncreaseTokenAmountOnReceiver() public {
+        uint256 balance = wallToken.balanceOf(deployerAddress);
+        uint256 transferAmount = 1 ether;
+
+        vm.prank(testerAddress);
+        wallToken.transfer(deployerAddress, transferAmount);
+        assertEq(wallToken.balanceOf(deployerAddress), balance + transferAmount);
+    }
+
+    ////////////////////////////
+    // Testcases transferFrom //
+    ////////////////////////////
+    
+    modifier approved {
+        uint256 balance = wallToken.balanceOf(testerAddress);
+        vm.prank(testerAddress);
+        wallToken.approve(approvedAddress, balance);
+        _;
+    }
+
+    function testUserCannotTransferFromWithoutApproval() public {
+        vm.prank(approvedAddress);
+        vm.expectRevert(WallToken__MissingApproval.selector);
+        wallToken.transferFrom(testerAddress, deployerAddress, 1 ether);
+    }
+
+    function testUserCannotTransferFromExceedingTokens() public {
+        uint256 balance = wallToken.balanceOf(testerAddress);
+        vm.prank(testerAddress);
+        wallToken.approve(approvedAddress, balance + 1);
+
+        vm.prank(approvedAddress);
+        vm.expectRevert(WallToken__NotEnoughTokens.selector);
+        wallToken.transferFrom(testerAddress, deployerAddress, balance + 1);
+    }
+
+    function testUserCannotTransferFromToZeroAddress() public approved() {
+        uint256 balance = wallToken.balanceOf(testerAddress);
+
+        vm.prank(approvedAddress);
+        vm.expectRevert(WallToken__CannotSendToZeroAddress.selector);
+        wallToken.transferFrom(testerAddress, address(0), balance);
+    }
+
+    function testTransferFromDoesCorrectlyReduceTokenAmountOnSender() public approved() {
+        uint256 balance = wallToken.balanceOf(testerAddress);
+        uint256 transferAmount = 1 ether;
+
+        vm.prank(approvedAddress);
+        wallToken.transferFrom(testerAddress, deployerAddress, transferAmount);
+        assertEq(wallToken.balanceOf(testerAddress), balance - transferAmount);
+    }
+    
+    function testTransferFromDoesCorrectlyIncreaseTokenAmountOnReceiver() public approved() {
+        uint256 balance = wallToken.balanceOf(deployerAddress);
+        uint256 transferAmount = 1 ether;
+
+        vm.prank(approvedAddress);
+        wallToken.transferFrom(testerAddress, deployerAddress, transferAmount);
+        assertEq(wallToken.balanceOf(deployerAddress), balance + transferAmount);
+    }
+
+        function testTransferFromDoesCorrectlyReduceAllowanceAmount() public approved() {
+        uint256 allowance = wallToken.allowance(testerAddress, approvedAddress);
+        uint256 transferAmount = 1 ether;
+
+        vm.prank(approvedAddress);
+        wallToken.transferFrom(testerAddress, deployerAddress, transferAmount);
+        assertEq(wallToken.allowance(testerAddress, approvedAddress), allowance - transferAmount);
+    }
+
 }
