@@ -161,4 +161,18 @@ contract TestWallToken is Script, Test {
         assertEq(wallToken.allowance(testerAddress, approvedAddress), allowance - transferAmount);
     }
 
+    ////////////////////////////
+    // Testcases approve ///////
+    ////////////////////////////
+
+    function testApproveCanNotApproveZeroAddress() public {
+        uint256 approvalAmount = 1 ether;
+        vm.prank(testerAddress);
+        vm.expectRevert(WallToken__CannotSendToZeroAddress.selector);
+        wallToken.approve(address(0), approvalAmount);
+    }
+
+    function testApproveMappingIsUpdatedCorrectly() public approved() {
+        assertEq(wallToken.allowance(testerAddress, approvedAddress), tokenSupply);
+    }
 }
