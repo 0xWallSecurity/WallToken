@@ -24,7 +24,7 @@ contract DeployHelper is Script {
         }
     }
 
-    function setAnvilConfig() public returns (DeployConfig memory anvilDeployConfig) {
+    function setAnvilConfig() public view returns (DeployConfig memory anvilDeployConfig) {
         anvilDeployConfig = DeployConfig({
             tokenName: "Wall Token",
             tokenSymbol: "WTK",
